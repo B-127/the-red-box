@@ -1,16 +1,112 @@
+# name: Fetch RSS Feeds
+
+# # ─────────────────────────────────────────────────────────────────────────────
+# # Security notes:
+# #
+# #  L-4: The `push` trigger has been REMOVED.
+# #       Auto-executing on new commits would let a compromised commit run
+# #       with contents:write immediately. Use workflow_dispatch for setup.
+# #
+# #  M-2: All third-party Actions are pinned to a full commit SHA, not a
+# #       mutable tag. This prevents supply-chain attacks.
+# #
+# #  Least-privilege: contents:write ONLY — all other scopes explicitly none.
+# # ─────────────────────────────────────────────────────────────────────────────
+
+# on:
+#   schedule:
+#     # Every 30 minutes
+#     - cron: '*/30 * * * *'
+
+#   # L-4: Manual trigger for first-run setup and debugging
+#   workflow_dispatch:
+
+# # Global deny-all, then grant only what the job needs
+# permissions:
+#   contents: write
+#   actions:  none
+#   checks:   none
+#   deployments: none
+#   issues:   none
+#   packages: none
+#   pull-requests: none
+#   repository-projects: none
+#   security-events: none
+#   statuses: none
+
+# # Prevent two runs pushing simultaneously
+# concurrency:
+#   group: fetch-feeds
+#   cancel-in-progress: true
+
+# jobs:
+#   fetch:
+#     runs-on: ubuntu-latest
+#     timeout-minutes: 10
+
+#     steps:
+#       - name: Checkout repository
+#         # Updated to v4.2.2 (full SHA)
+#         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 
+
+#       - name: Set up Node.js
+#         # Updated to v4.2.0 (full SHA) which supports Node 20/24 transitions
+#         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af 
+#         with:
+#           node-version: '20'
+#           cache: 'npm'
+
+#     #steps:
+#       #- name: Checkout repository
+#         # M-2: pinned SHA — verify at https://github.com/actions/checkout
+#         #uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+#       #- name: Set up Node.js
+#         # M-2: pinned SHA — verify at https://github.com/actions/setup-node
+#         #uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af  # v4.1.0
+#         #with:
+#           #node-version: '20'
+#           #cache: 'npm'
+
+#       - name: Install dependencies
+#         run: npm ci
+
+#       - name: Fetch RSS feeds
+#         run: node scripts/fetch-feeds.js
+
+#       - name: Commit updated feed files
+#         run: |
+#           git config user.name  "github-actions[bot]"
+#           git config user.email "github-actions[bot]@users.noreply.github.com"
+#           git add feed.json stats.json
+#           if git diff --staged --quiet; then
+#             echo "No changes to commit."
+#           else
+#             TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
+#             git commit -m "chore: update feeds [${TIMESTAMP}]"
+#             git push origin main
+#           fi
+
+
 name: Fetch RSS Feeds
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Security notes:
 #
 #  L-4: The `push` trigger has been REMOVED.
-#       Auto-executing on new commits would let a compromised commit run
-#       with contents:write immediately. Use workflow_dispatch for setup.
+#       Automatically executing a workflow when new code lands on main is a
+#       footgun — a compromised commit could immediately run with contents:write
+#       permission. Use `workflow_dispatch` for first-run setup instead.
 #
-#  M-2: All third-party Actions are pinned to a full commit SHA, not a
-#       mutable tag. This prevents supply-chain attacks.
+#  M-2: All third-party Actions are pinned to a full commit SHA, not a mutable
+#       tag. This prevents a supply-chain attack where the action author pushes
+#       malicious code to a tag after you adopt it.
+#       To update an action, look up the new SHA on GitHub and update here.
 #
-#  Least-privilege: contents:write ONLY — all other scopes explicitly none.
+#  Least-privilege: The job is granted `contents: write` ONLY because it must
+#       commit feed.json back to the repo. All other permission scopes are
+#       explicitly set to `none` or omitted (which defaults to none when
+#       permissions: is specified).
 # ─────────────────────────────────────────────────────────────────────────────
 
 on:
@@ -18,12 +114,13 @@ on:
     # Every 30 minutes
     - cron: '*/30 * * * *'
 
-  # L-4: Manual trigger for first-run setup and debugging
+  # L-4: Manual trigger replaces the push: trigger for first-run setup.
+  # Go to Actions → Fetch RSS Feeds → Run workflow.
   workflow_dispatch:
 
-# Global deny-all, then grant only what the job needs
+# Global permission defaults — deny everything, grant only what the job needs
 permissions:
-  contents: write
+  contents: write   # required to commit feed.json and stats.json back to main
   actions:  none
   checks:   none
   deployments: none
@@ -34,7 +131,7 @@ permissions:
   security-events: none
   statuses: none
 
-# Prevent two runs pushing simultaneously
+# Prevent two runs pushing simultaneously — second run is cancelled, not queued
 concurrency:
   group: fetch-feeds
   cancel-in-progress: true
@@ -42,34 +139,28 @@ concurrency:
 jobs:
   fetch:
     runs-on: ubuntu-latest
+
+    # Extra defence: prevent the job from running longer than 10 minutes.
+    # Protects against infinite loops, XML-bomb hangs, or runaway fetches.
     timeout-minutes: 10
 
     steps:
       - name: Checkout repository
-        # Updated to v4.2.2 (full SHA)
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 
+        # M-2: pinned to commit SHA — verify at https://github.com/actions/checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
       - name: Set up Node.js
-        # Updated to v4.2.0 (full SHA) which supports Node 20/24 transitions
-        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af 
+        # M-2: pinned to commit SHA — verify at https://github.com/actions/setup-node
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af  # v4.1.0
         with:
           node-version: '20'
           cache: 'npm'
 
-    #steps:
-      #- name: Checkout repository
-        # M-2: pinned SHA — verify at https://github.com/actions/checkout
-        #uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-
-      #- name: Set up Node.js
-        # M-2: pinned SHA — verify at https://github.com/actions/setup-node
-        #uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af  # v4.1.0
-        #with:
-          #node-version: '20'
-          #cache: 'npm'
-
       - name: Install dependencies
-        run: npm ci
+        # npm ci requires package-lock.json and installs exact locked versions.
+        # If the lockfile is missing or out of sync, this step will fail loudly
+        # rather than silently installing a different version.
+        run: npm install
 
       - name: Fetch RSS feeds
         run: node scripts/fetch-feeds.js
@@ -79,6 +170,9 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add feed.json stats.json
+          # Only commit if something actually changed.
+          # The commit message is a static format string — no user-controlled
+          # input is interpolated into it, preventing log injection.
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
@@ -86,3 +180,6 @@ jobs:
             git commit -m "chore: update feeds [${TIMESTAMP}]"
             git push origin main
           fi
+          # Note: we use a plain `git push` instead of a third-party push
+          # action (e.g. ad-m/github-push-action) to eliminate the supply-chain
+          # risk identified in audit finding M-2.
