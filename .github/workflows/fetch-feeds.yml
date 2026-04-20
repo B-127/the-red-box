@@ -3,12 +3,8 @@ name: Fetch RSS Feeds
 # ─────────────────────────────────────────────────────────────────────────────
 # Security notes:
 #
-#  L-4: The `push` trigger has been REMOVED.
-#       Auto-executing on new commits would let a compromised commit run
-#       with contents:write immediately. Use workflow_dispatch for setup.
-#
-#  M-2: All third-party Actions are pinned to a full commit SHA, not a
-#       mutable tag. This prevents supply-chain attacks.
+#  No push: trigger — auto-executing on new commits would let a compromised
+#  commit run with contents:write immediately. Use workflow_dispatch for setup.
 #
 #  Least-privilege: contents:write ONLY — all other scopes explicitly none.
 # ─────────────────────────────────────────────────────────────────────────────
@@ -18,7 +14,7 @@ on:
     # Every 30 minutes
     - cron: '*/30 * * * *'
 
-  # L-4: Manual trigger for first-run setup and debugging
+  # Manual trigger for first-run setup and debugging
   workflow_dispatch:
 
 # Global deny-all, then grant only what the job needs
@@ -46,22 +42,21 @@ jobs:
 
     steps:
       - name: Checkout repository
-        # M-2: pinned SHA (Node 22 runner) — verify at https://github.com/actions/checkout
-        uses: actions/checkout@v4
+        # v6 — runs on Node.js 24 runtime (replaces deprecated Node 20 runner)
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        # M-2: pinned SHA (Node 22 runner) — verify at https://github.com/actions/setup-node
-        # cache: 'npm' removed — causes a 400 on fresh repos with no prior cache entry
-        uses: actions/setup-node@v4
+        # v6 — runs on Node.js 24 runtime
+        # package-manager-cache: false — prevents the cache-service 400 error
+        # on fresh repos that have no prior cache entry to restore
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
+          package-manager-cache: false
 
       - name: Install dependencies
-        # npm install is used instead of npm ci so that:
-        #  (a) a real package-lock.json is generated and committed on the first run
-        #      (the manually-crafted lockfile cannot pass npm ci's integrity checks)
-        #  (b) subsequent runs use the committed lockfile and behave like npm ci
-        # Once the lockfile is committed, this step is effectively frozen.
+        # npm install generates a real package-lock.json on the first run and
+        # commits it below — subsequent runs use the committed lockfile.
         run: npm install
 
       - name: Fetch RSS feeds
@@ -71,7 +66,6 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Stage feed outputs AND the lockfile (generated on first run)
           git add feed.json stats.json package-lock.json
           if git diff --staged --quiet; then
             echo "No changes to commit."
