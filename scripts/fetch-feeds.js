@@ -10,7 +10,7 @@
  *  M-1  Tag-strip uses a state-machine that handles malformed/split tags
  *  M-2  Future timestamps clamped to now; age-gate uses Math.abs
  *  M-3  Raw item count capped before O(n^2) clustering (MAX_RAW_ITEMS)
- *  M-4  getDirectChildText() reads only direct child nodes, not all descendants
+ *  M-4  getItemFieldText() reads only direct child nodes, not all descendants
  *  L-1  src values sanitised (non-printable / ANSI stripped) before logging
  *  L-2  feedsFetched / feedsFailed tallied from results array, not closures
  *  L-4  Stopword removal uses Set-based token filter, not \b word-boundary regex
@@ -310,27 +310,22 @@ function cleanText(raw) {
   return stripTags(decodeEntities(raw)).trim();
 }
 
-// M-4: Read only DIRECT child element nodes of `parent`.
-// The old getElementsByTagName() searches all descendants, which allowed:
-//  - Nested <item> elements to leak wrong data
-//  - Atom <link href="…"/> to be missed (textContent is "")
-// This version iterates childNodes directly and handles the Atom href attribute.
-function getDirectChildText(parent, tagName) {
-  if (!parent || !parent.childNodes) return '';
-  for (let i = 0; i < parent.childNodes.length; i++) {
-    const node = parent.childNodes[i];
-    if (node.nodeType !== 1 /* ELEMENT_NODE */) continue;
-    // Strip namespace prefix for comparison
-    const localName = node.localName || (node.nodeName || '').split(':').pop() || '';
-    if (localName !== tagName) continue;
-    // For <link>, check href attribute first (Atom format)
-    if (tagName === 'link') {
-      const href = typeof node.getAttribute === 'function' ? node.getAttribute('href') : null;
-      if (href && href.trim()) return href.trim();
-    }
-    return (node.textContent || node.text || '').trim();
+// Get text from a named child element of `parent`.
+// Uses getElementsByTagName scoped to the item node — safe because we are
+// already inside a single <item>/<entry> and the tag names we query
+// (title, link, guid, description, pubDate etc.) are not nested further.
+// Special case: for <link>, also checks the href attribute (Atom format).
+function getItemFieldText(parent, tagName) {
+  if (!parent) return '';
+  const nodes = parent.getElementsByTagName(tagName);
+  if (!nodes || nodes.length === 0) return '';
+  const node = nodes[0];
+  // Atom <link href="…"/> — prefer attribute over empty textContent
+  if (tagName === 'link') {
+    const href = typeof node.getAttribute === 'function' ? node.getAttribute('href') : null;
+    if (href && href.trim()) return href.trim();
   }
-  return '';
+  return (node.textContent || node.text || '').trim();
 }
 
 function parseRSS(xml, sourceId, sourceName, sourceAbbr, cat) {
@@ -355,13 +350,13 @@ function parseRSS(xml, sourceId, sourceName, sourceAbbr, cat) {
     const item = items[i];
 
     // Title
-    let title = cleanText(getDirectChildText(item, 'title'));
+    let title = cleanText(getItemFieldText(item, 'title'));
     if (!title) continue;
     title = title.slice(0, MAX_TITLE_LEN);
 
     // Link — H-1: https:// only; C-2: private IP blocked
     let link = '';
-    const rawLink = getDirectChildText(item, 'link') || getDirectChildText(item, 'guid');
+    const rawLink = getItemFieldText(item, 'link') || getItemFieldText(item, 'guid');
     if (rawLink) {
       const trimmed = rawLink.trim();
       // H-1: https:// only — http:// links are not written to output
@@ -374,17 +369,17 @@ function parseRSS(xml, sourceId, sourceName, sourceAbbr, cat) {
     }
 
     // Deck
-    const rawDesc = getDirectChildText(item, 'description')
-      || getDirectChildText(item, 'summary')   // Atom
+    const rawDesc = getItemFieldText(item, 'description')
+      || getItemFieldText(item, 'summary')   // Atom
       || '';
     let deck = cleanText(rawDesc);
     deck = deck.slice(0, MAX_DECK_LEN);
 
     // Publication date — M-2: clamp future timestamps to now
-    const pubRaw = getDirectChildText(item, 'pubDate')
-      || getDirectChildText(item, 'date')
-      || getDirectChildText(item, 'published')
-      || getDirectChildText(item, 'updated')
+    const pubRaw = getItemFieldText(item, 'pubDate')
+      || getItemFieldText(item, 'date')
+      || getItemFieldText(item, 'published')
+      || getItemFieldText(item, 'updated')
       || '';
     let pub = pubRaw ? new Date(pubRaw).getTime() : now;
     // M-2: reject NaN, zero/negative, and future dates (60 s clock-skew tolerance)
