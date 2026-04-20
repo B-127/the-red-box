@@ -242,7 +242,7 @@ main {
 /* ── HERO GRID ── */
 .hero-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 300px;
+  grid-template-columns: 1fr 1fr;
   gap: 0;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -256,23 +256,57 @@ main {
 }
 
 .hero-middle {
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--border);
+  gap: 0;
 }
 
-.hero-secondary {
-  padding: 24px 24px 20px;
+/* ── Hero story list ── */
+.hero-list-item {
+  padding: 14px 0;
   border-bottom: 1px solid var(--border);
 }
+.hero-list-item:last-child { border-bottom: none; }
 
-.hero-tertiary {
-  padding: 20px 24px 24px;
+.hero-list-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
 }
 
-.sidebar {
-  padding: 20px;
-  background: var(--surface-2);
+.hero-list-cat {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.hero-list-headline {
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.hero-list-headline--large {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+.hero-list-headline a:hover,
+.hero-list-headline--large a:hover { color: var(--accent); }
+
+.hero-list-deck {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 5px;
 }
 
 /* ── ACCENT BAR ── */
@@ -699,10 +733,8 @@ footer {
   .hero-grid {
     grid-template-columns: 1fr;
   }
-  .hero-main     { border-right: none; border-bottom: 1px solid var(--border); }
-  .hero-middle   { border-right: none; }
-  .hero-secondary{ border-bottom: 1px solid var(--border); }
-  .sidebar       { border-top: 1px solid var(--border); }
+  .hero-main  { border-right: none; border-bottom: 1px solid var(--border); }
+  .hero-middle { border-top: none; }
   .stream-grid   { grid-template-columns: 1fr 1fr; }
   .stream-item:nth-child(3n)        { border-right: 1px solid var(--border); }
   .stream-item:nth-child(2n)        { border-right: none; }
