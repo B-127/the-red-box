@@ -397,7 +397,6 @@ function buildVersionRow(version) {
   if (href) {
     row = document.createElement('a');
     row.href   = href;
-    row.target = '_blank';
     row.rel    = 'noopener noreferrer';
     row.className = 'version-row version-row--linked';
   } else {
@@ -567,11 +566,12 @@ function makeAccentBar() {
   return bar;
 }
 
-// Returns an <a> with safe external-link attributes. All text set via textContent.
+// Returns an <a> that navigates to an external URL in the same tab.
+// target="_blank" was removed — popup blockers silently swallow new-tab
+// link clicks, making headlines appear unclickable.
 function makeExternalLink(href, text) {
   const a = document.createElement('a');
   a.href        = href;
-  a.target      = '_blank';
   a.rel         = 'noopener noreferrer';
   a.textContent = text;
   return a;
