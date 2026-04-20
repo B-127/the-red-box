@@ -1,0 +1,16 @@
+{
+  "name": "the-red-box",
+  "version": "1.0.0",
+  "description": "Sri Lanka English-language news aggregator — The Red Box",
+  "private": true,
+  "scripts": {
+    "fetch": "node scripts/fetch-feeds.js",
+    "dev":   "python3 -m http.server 8080"
+  },
+  "dependencies": {
+    "@xmldom/xmldom": "0.8.10"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

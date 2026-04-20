@@ -1,0 +1,13 @@
+{
+  "generated": "2026-01-01T00:00:00.000Z",
+  "clusters": [],
+  "ticker": [
+    { "src": "The Red Box", "title": "Feed initialising — stories will appear after the first scheduled fetch", "link": "" }
+  ],
+  "sourceCounts": [
+    { "name": "Daily FT",    "abbr": "DFT", "count": 0 },
+    { "name": "EconomyNext", "abbr": "EN",  "count": 0 },
+    { "name": "Ada Derana",  "abbr": "AD",  "count": 0 },
+    { "name": "Daily News",  "abbr": "DN",  "count": 0 }
+  ]
+}
