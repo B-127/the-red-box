@@ -354,12 +354,12 @@ function parseRSS(xml, sourceId, sourceName, sourceAbbr, cat) {
     if (!title) continue;
     title = title.slice(0, MAX_TITLE_LEN);
 
-    // Link — H-1: https:// only; C-2: private IP blocked
+    // Link — upgrade http:// to https://, validate, block private IPs
     let link = '';
     const rawLink = getItemFieldText(item, 'link') || getItemFieldText(item, 'guid');
     if (rawLink) {
-      const trimmed = rawLink.trim();
-      // H-1: https:// only — http:// links are not written to output
+      // Upgrade http:// to https:// — we don't follow the URL, just store it
+      const trimmed = rawLink.trim().replace(/^http:\/\//i, 'https://');
       if (/^https:\/\//i.test(trimmed)) {
         try {
           const p = new URL(trimmed);
