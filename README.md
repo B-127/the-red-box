@@ -1,4 +1,4 @@
-# The Red Box 🔴
+# The Red Box
 
 **Sri Lanka's English-language news, aggregated from RSS feeds.**
 
