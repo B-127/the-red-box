@@ -46,14 +46,14 @@ jobs:
 
     steps:
       - name: Checkout repository
-        # Updated to v4.3.0 (or latest SHA) to ensure Node 24 compatibility
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.3.0
+        # Updated to v4.2.2 (full SHA)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 
 
       - name: Set up Node.js
-        # Updated to v5.0.0 which explicitly supports the Node 24 runtime
-        uses: actions/setup-node@1d4294205f2526557876a3a413d78906666870da # v5.0.0
+        # Updated to v4.2.0 (full SHA) which supports Node 20/24 transitions
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af 
         with:
-          node-version: '20' # You can keep your app on 20, the runner will use 24
+          node-version: '20'
           cache: 'npm'
 
     #steps:
