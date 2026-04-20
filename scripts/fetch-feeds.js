@@ -140,7 +140,22 @@ function loadAndValidateSources() {
 
   if (valid.length === 0) throw new Error('No valid sources found in sources.json');
 
-  const allowedHosts = new Set(valid.flatMap(s => s.feeds.map(f => f.hostname)));
+  // Build allowlist from every registered feed hostname, automatically adding
+  // the www. variant (or bare domain) so that a redirect between www and
+  // non-www does not get blocked by the C-1 allowlist check.
+  const allowedHosts = new Set();
+  for (const src of valid) {
+    for (const feed of src.feeds) {
+      const h = feed.hostname;
+      allowedHosts.add(h);
+      if (h.startsWith('www.')) {
+        allowedHosts.add(h.slice(4));   // www.example.com -> example.com
+      } else {
+        allowedHosts.add('www.' + h);  // example.com -> www.example.com
+      }
+    }
+  }
+
   return { sources: valid, allowedHosts };
 }
 
