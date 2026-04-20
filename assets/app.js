@@ -235,11 +235,9 @@ function getFiltered() {
 // ── Hero grid ─────────────────────────────────────────────────────────────────
 
 function buildHeroGrid(clusters) {
-  const heroMain      = document.getElementById('hero-main');
-  const heroSecondary = document.getElementById('hero-secondary');
-  const heroTertiary  = document.getElementById('hero-tertiary');
-  const heroSidebar   = document.getElementById('hero-sidebar');
-  const heroSection   = document.getElementById('hero-section');
+  const heroMain   = document.getElementById('hero-main');
+  const heroMiddle = document.getElementById('hero-middle');
+  const heroSection = document.getElementById('hero-section');
 
   if (!heroSection) return;
 
@@ -249,15 +247,13 @@ function buildHeroGrid(clusters) {
   }
   heroSection.hidden = false;
 
-  // ── MAIN hero ──
+  // ── MAIN lead story (left column) ──
   if (heroMain && clusters[0]) {
-    const c = clusters[0];
-    // M-5: versions[0] is guaranteed valid by isValidCluster filter
+    const c    = clusters[0];
     const p    = c.versions[0];
     const href = safeHref(p.link);
 
     heroMain.innerHTML = '';
-
     heroMain.appendChild(makeAccentBar());
     heroMain.appendChild(makeSourceTag(p.srcFull || p.src));
 
@@ -268,18 +264,14 @@ function buildHeroGrid(clusters) {
 
     const hl = document.createElement('h1');
     hl.className = 'hero-headline';
-    if (href) {
-      const a = makeExternalLink(href, c.title);
-      hl.appendChild(a);
-    } else {
-      hl.textContent = c.title;
-    }
+    if (href) hl.appendChild(makeExternalLink(href, c.title));
+    else hl.textContent = c.title;
     heroMain.appendChild(hl);
 
     if (p.deck && p.deck.trim()) {
       const deck = document.createElement('p');
       deck.className   = 'standfirst';
-      deck.textContent = p.deck.slice(0, 250);
+      deck.textContent = p.deck.slice(0, 300);
       heroMain.appendChild(deck);
     }
 
@@ -292,96 +284,57 @@ function buildHeroGrid(clusters) {
     }
   }
 
-  // ── SECONDARY hero ──
-  if (heroSecondary && clusters[1]) {
-    const c    = clusters[1];
-    const p    = c.versions[0];
-    const href = safeHref(p.link);
-
-    heroSecondary.innerHTML = '';
-    heroSecondary.appendChild(makeSourceTag(p.srcFull || p.src));
-
-    const hl = document.createElement('h2');
-    hl.className = 'subheadline';
-    if (href) {
-      hl.appendChild(makeExternalLink(href, c.title));
-    } else {
-      hl.textContent = c.title;
-    }
-    heroSecondary.appendChild(hl);
-
-    if (p.deck && p.deck.trim()) {
-      const deck = document.createElement('p');
-      deck.className        = 'standfirst';
-      deck.style.fontSize   = '13px';
-      deck.style.marginBottom = '10px';
-      deck.textContent = p.deck.slice(0, 200);
-      heroSecondary.appendChild(deck);
-    }
-
-    heroSecondary.appendChild(makeMeta([relativeTime(c.pub)]));
-  }
-
-  // ── TERTIARY hero ──
-  if (heroTertiary && clusters[2]) {
-    const c    = clusters[2];
-    const p    = c.versions[0];
-    const href = safeHref(p.link);
-
-    heroTertiary.innerHTML = '';
-    heroTertiary.appendChild(makeSourceTag(p.srcFull || p.src));
-
-    const hl = document.createElement('h2');
-    hl.className        = 'subheadline';
-    hl.style.fontSize   = '16px';
-    if (href) {
-      hl.appendChild(makeExternalLink(href, c.title));
-    } else {
-      hl.textContent = c.title;
-    }
-    heroTertiary.appendChild(hl);
-
-    const meta = makeMeta([relativeTime(c.pub)]);
-    meta.style.marginTop = '8px';
-    heroTertiary.appendChild(meta);
-  }
-
-  // ── SIDEBAR (items 3–10) ──
-  if (heroSidebar) {
-    heroSidebar.innerHTML = '';
+  // ── RIGHT column — stories 2 through 7 as a compact list ──
+  if (heroMiddle) {
+    heroMiddle.innerHTML = '';
 
     const label = document.createElement('div');
     label.className   = 'sidebar-label';
-    label.textContent = 'Latest';
-    heroSidebar.appendChild(label);
+    label.textContent = 'More Stories';
+    heroMiddle.appendChild(label);
 
-    clusters.slice(3, 11).forEach(c => {
+    clusters.slice(1, 8).forEach((c, i) => {
       const p    = c.versions[0];
       const href = safeHref(p.link);
 
       const item = document.createElement('div');
-      item.className = 'sidebar-item';
+      item.className = 'hero-list-item';
 
-      const src = document.createElement('div');
+      const top = document.createElement('div');
+      top.className = 'hero-list-top';
+
+      const src = document.createElement('span');
       src.className   = 'sidebar-source';
       src.textContent = (p.srcFull || p.src).slice(0, 30);
-      item.appendChild(src);
+      top.appendChild(src);
+
+      const cat = document.createElement('span');
+      cat.className   = 'hero-list-cat';
+      cat.textContent = c.cat;
+      top.appendChild(cat);
+
+      item.appendChild(top);
 
       const hl = document.createElement('div');
-      hl.className = 'sidebar-headline';
-      if (href) {
-        hl.appendChild(makeExternalLink(href, c.title.slice(0, 120)));
-      } else {
-        hl.textContent = c.title.slice(0, 120);
-      }
+      hl.className = i < 2 ? 'hero-list-headline hero-list-headline--large' : 'hero-list-headline';
+      if (href) hl.appendChild(makeExternalLink(href, c.title.slice(0, 140)));
+      else hl.textContent = c.title.slice(0, 140);
       item.appendChild(hl);
+
+      // Show deck for first 2 items
+      if (i < 2 && p.deck && p.deck.trim()) {
+        const deck = document.createElement('p');
+        deck.className   = 'hero-list-deck';
+        deck.textContent = p.deck.slice(0, 160);
+        item.appendChild(deck);
+      }
 
       const time = document.createElement('div');
       time.className   = 'sidebar-time';
       time.textContent = relativeTime(c.pub);
       item.appendChild(time);
 
-      heroSidebar.appendChild(item);
+      heroMiddle.appendChild(item);
     });
   }
 }
