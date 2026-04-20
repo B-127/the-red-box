@@ -66,12 +66,12 @@ const PRIVATE_IP_RE = /^(0\.|10\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|127\.|
 
 function safeHref(raw) {
   if (!raw || typeof raw !== 'string') return '';
-  const trimmed = raw.trim();
-  // H-1: https:// only — http:// links are not rendered as interactive
+  // Upgrade http:// to https:// — the feed may serve http links; we rewrite
+  // the scheme so the browser opens a secure connection
+  const trimmed = raw.trim().replace(/^http:\/\//i, 'https://');
   if (!/^https:\/\//i.test(trimmed)) return '';
   try {
     const p = new URL(trimmed);
-    // C-2: block private/reserved IPs using the canonical regex
     if (PRIVATE_IP_RE.test(p.hostname)) return '';
     return p.href;
   } catch { return ''; }
