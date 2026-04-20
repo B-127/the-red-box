@@ -2,7 +2,7 @@
 
 **Sri Lanka's English-language news, aggregated from RSS feeds.**
 
-A static news aggregator built for GitHub Pages. No backend, no database — just a scheduled GitHub Actions workflow that fetches RSS feeds every 30 minutes and writes a static `feed.json`, which the front-end reads directly.
+A static news aggregator. Scheduled GitHub Actions workflow that fetches RSS feeds every 30 minutes and writes a static `feed.json`, which the front-end reads directly.
 
 ---
 
