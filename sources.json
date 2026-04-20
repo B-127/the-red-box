@@ -16,14 +16,7 @@
     "name": "EconomyNext",
     "abbr": "EN",
     "feeds": [
-      { "url": "https://economynext.com/economy/feed",          "cat": "Economy" },
-      { "url": "https://economynext.com/finance/feed",         "cat": "Business" },
-      { "url": "https://economynext.com/markets/feed",         "cat": "Business" },
-      { "url": "https://economynext.com/politics/feed",        "cat": "Politics" },
-      { "url": "https://economynext.com/energy/feed",          "cat": "Business" },
-      { "url": "https://economynext.com/world/feed",           "cat": "World" },
-      { "url": "https://economynext.com/tech/feed",            "cat": "Technology" },
-      { "url": "https://economynext.com/culture/sports/feed",  "cat": "Sports" }
+      { "url": "https://economynext.com/feed", "cat": "Economy" }
     ]
   },
   {
@@ -39,11 +32,7 @@
     "name": "Daily News",
     "abbr": "DN",
     "feeds": [
-      { "url": "https://www.dailynews.lk/category/local/feed",    "cat": "Politics" },
-      { "url": "https://www.dailynews.lk/category/world/feed",    "cat": "World" },
-      { "url": "https://www.dailynews.lk/category/business/feed", "cat": "Business" },
-      { "url": "https://www.dailynews.lk/category/sports/feed",   "cat": "Sports" },
-      { "url": "https://www.dailynews.lk/category/features/feed", "cat": "Opinion" }
+      { "url": "https://dailynews.lk/feed", "cat": "Politics" }
     ]
   }
 ]
