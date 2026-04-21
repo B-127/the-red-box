@@ -190,8 +190,12 @@ function secureFetch(url, allowedHosts, redirectsLeft = MAX_REDIRECTS) {
       method:   'GET',
       timeout:  TIMEOUT_MS,
       headers:  {
-        'User-Agent': 'TheRedBox/1.0 RSS-Aggregator (+https://github.com/)',
-        'Accept':     'application/rss+xml, application/atom+xml, application/xml, text/xml, */*'
+        // Use a realistic browser UA — many WordPress/CDN WAFs silently block
+        // or return empty pages for non-browser user agents.
+        'User-Agent':      'Mozilla/5.0 (compatible; TheRedBox/1.0; +https://github.com/)',
+        'Accept':          'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Cache-Control':   'no-cache'
       }
     };
 
@@ -343,15 +347,22 @@ function parseRSS(xml, sourceId, sourceName, sourceAbbr, cat) {
     ? rssItems
     : doc.getElementsByTagName('entry');
 
+  if (items.length === 0) {
+    console.warn(`    [parse] ${sanitiseForLog(sourceName)}: 0 items/entries found in XML (body length: ${xml.length})`);
+    return [];
+  }
+
   const now    = Date.now();
   const result = [];
+  let skippedNoTitle = 0;
+  let skippedAge     = 0;
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
 
     // Title
     let title = cleanText(getItemFieldText(item, 'title'));
-    if (!title) continue;
+    if (!title) { skippedNoTitle++; continue; }
     title = title.slice(0, MAX_TITLE_LEN);
 
     // Link — upgrade http:// to https://, validate, block private IPs
@@ -386,9 +397,13 @@ function parseRSS(xml, sourceId, sourceName, sourceAbbr, cat) {
     if (!Number.isFinite(pub) || pub <= 0 || pub > now + 60_000) pub = now;
 
     // Age gate — Math.abs guards any residual skew after clamping
-    if (Math.abs(now - pub) > MAX_AGE_MS) continue;
+    if (Math.abs(now - pub) > MAX_AGE_MS) { skippedAge++; continue; }
 
     result.push({ title, deck, link, pub, src: sourceAbbr, srcFull: sourceName, cat, sourceId });
+  }
+
+  if (skippedNoTitle > 0 || skippedAge > 0) {
+    console.warn(`    [parse] ${sanitiseForLog(sourceName)}: ${items.length} items found, ${skippedNoTitle} skipped (no title), ${skippedAge} skipped (too old), ${result.length} kept`);
   }
 
   return result;
