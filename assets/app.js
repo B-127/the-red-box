@@ -235,8 +235,9 @@ function getFiltered() {
 // ── Hero grid ─────────────────────────────────────────────────────────────────
 
 function buildHeroGrid(clusters) {
-  const heroMain   = document.getElementById('hero-main');
-  const heroMiddle = document.getElementById('hero-middle');
+  const heroLead    = document.getElementById('hero-lead');
+  const heroRight   = document.getElementById('hero-right');
+  const heroStrip   = document.getElementById('hero-strip');
   const heroSection = document.getElementById('hero-section');
 
   if (!heroSection) return;
@@ -247,94 +248,100 @@ function buildHeroGrid(clusters) {
   }
   heroSection.hidden = false;
 
-  // ── MAIN lead story (left column) ──
-  if (heroMain && clusters[0]) {
+  // ── LEAD story (top-left, clusters[0]) ──
+  if (heroLead && clusters[0]) {
     const c    = clusters[0];
     const p    = c.versions[0];
     const href = safeHref(p.link);
 
-    heroMain.innerHTML = '';
-    heroMain.appendChild(makeAccentBar());
-    heroMain.appendChild(makeSourceTag(p.srcFull || p.src));
+    heroLead.innerHTML = '';
+    heroLead.appendChild(makeAccentBar());
+
+    const metaRow = document.createElement('div');
+    metaRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:12px;';
+    metaRow.appendChild(makeSourceTag(p.srcFull || p.src));
 
     const catPill = document.createElement('div');
     catPill.className   = 'category-pill';
     catPill.textContent = c.cat;
-    heroMain.appendChild(catPill);
+    metaRow.appendChild(catPill);
+    heroLead.appendChild(metaRow);
 
     const hl = document.createElement('h1');
     hl.className = 'hero-headline';
     if (href) hl.appendChild(makeExternalLink(href, c.title));
     else hl.textContent = c.title;
-    heroMain.appendChild(hl);
+    heroLead.appendChild(hl);
 
     if (p.deck && p.deck.trim()) {
       const deck = document.createElement('p');
       deck.className   = 'standfirst';
-      deck.textContent = p.deck.slice(0, 300);
-      heroMain.appendChild(deck);
+      deck.textContent = p.deck.slice(0, 320);
+      heroLead.appendChild(deck);
     }
 
-    heroMain.appendChild(makeMeta([relativeTime(c.pub), c.cat]));
+    heroLead.appendChild(makeMeta([relativeTime(c.pub)]));
 
     if (href) {
       const readLink = makeExternalLink(href, 'Read at ' + (p.srcFull || p.src) + ' \u2192');
       readLink.className = 'read-link';
-      heroMain.appendChild(readLink);
+      heroLead.appendChild(readLink);
     }
   }
 
-  // ── RIGHT column — stories 2 through 7 as a compact list ──
-  if (heroMiddle) {
-    heroMiddle.innerHTML = '';
+  // ── RIGHT column — clusters[1] and clusters[2] ──
+  if (heroRight) {
+    heroRight.innerHTML = '';
 
-    const label = document.createElement('div');
-    label.className   = 'sidebar-label';
-    label.textContent = 'More Stories';
-    heroMiddle.appendChild(label);
-
-    clusters.slice(1, 8).forEach((c, i) => {
+    [clusters[1], clusters[2]].forEach(c => {
+      if (!c) return;
       const p    = c.versions[0];
       const href = safeHref(p.link);
 
       const item = document.createElement('div');
-      item.className = 'hero-list-item';
+      item.className = 'hero-secondary-item';
 
-      const top = document.createElement('div');
-      top.className = 'hero-list-top';
-
-      const src = document.createElement('span');
-      src.className   = 'sidebar-source';
-      src.textContent = (p.srcFull || p.src).slice(0, 30);
-      top.appendChild(src);
-
-      const cat = document.createElement('span');
-      cat.className   = 'hero-list-cat';
-      cat.textContent = c.cat;
-      top.appendChild(cat);
-
-      item.appendChild(top);
+      item.appendChild(makeSourceTag(p.srcFull || p.src));
 
       const hl = document.createElement('div');
-      hl.className = i < 2 ? 'hero-list-headline hero-list-headline--large' : 'hero-list-headline';
-      if (href) hl.appendChild(makeExternalLink(href, c.title.slice(0, 140)));
-      else hl.textContent = c.title.slice(0, 140);
+      hl.className = 'sec-headline';
+      if (href) hl.appendChild(makeExternalLink(href, c.title.slice(0, 160)));
+      else hl.textContent = c.title.slice(0, 160);
       item.appendChild(hl);
 
-      // Show deck for first 2 items
-      if (i < 2 && p.deck && p.deck.trim()) {
+      if (p.deck && p.deck.trim()) {
         const deck = document.createElement('p');
-        deck.className   = 'hero-list-deck';
-        deck.textContent = p.deck.slice(0, 160);
+        deck.className   = 'sec-deck';
+        deck.textContent = p.deck.slice(0, 200);
         item.appendChild(deck);
       }
 
-      const time = document.createElement('div');
-      time.className   = 'sidebar-time';
-      time.textContent = relativeTime(c.pub);
-      item.appendChild(time);
+      item.appendChild(makeMeta([relativeTime(c.pub), c.cat]));
+      heroRight.appendChild(item);
+    });
+  }
 
-      heroMiddle.appendChild(item);
+  // ── BOTTOM STRIP — clusters[3] through clusters[6] ──
+  if (heroStrip) {
+    heroStrip.innerHTML = '';
+
+    clusters.slice(3, 7).forEach(c => {
+      const p    = c.versions[0];
+      const href = safeHref(p.link);
+
+      const item = document.createElement('div');
+      item.className = 'hero-strip-item';
+
+      item.appendChild(makeSourceTag(p.srcFull || p.src));
+
+      const hl = document.createElement('div');
+      hl.className = 'strip-headline';
+      if (href) hl.appendChild(makeExternalLink(href, c.title.slice(0, 120)));
+      else hl.textContent = c.title.slice(0, 120);
+      item.appendChild(hl);
+
+      item.appendChild(makeMeta([relativeTime(c.pub), c.cat]));
+      heroStrip.appendChild(item);
     });
   }
 }
