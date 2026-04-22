@@ -24,7 +24,7 @@
     "name": "Ada Derana",
     "abbr": "AD",
     "feeds": [
-      { "url": "https://www.adaderana.lk/rss.php", "cat": "Politics" }
+      { "url": "https://www.adaderana.lk/rss.php",         "cat": "Politics" }
     ]
   },
   {
@@ -33,6 +33,14 @@
     "abbr": "DN",
     "feeds": [
       { "url": "https://dailynews.lk/feed", "cat": "Politics" }
+    ]
+  },
+  {
+    "id": "lanka-business-online",
+    "name": "Lanka Business Online",
+    "abbr": "LBO",
+    "feeds": [
+      { "url": "https://lankabusinessonline.com/feed", "cat": "Business" }
     ]
   }
 ]
