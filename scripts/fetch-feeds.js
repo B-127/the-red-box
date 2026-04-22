@@ -226,9 +226,12 @@ function secureFetch(url, allowedHosts, redirectsLeft = MAX_REDIRECTS) {
         return reject(new Error(`HTTP ${res.statusCode}`));
       }
 
-      // +C: Content-Type guard
+      // +C: Content-Type check — accept any text/* or xml-like type.
+      // Some feeds (e.g. Ada Derana rss.php) serve valid RSS XML with
+      // Content-Type: text/html — we accept it and let the XML parser decide.
       const ct = res.headers['content-type'] || '';
-      if (!ACCEPTABLE_CONTENT_TYPE_RE.test(ct)) {
+      const ctOk = ACCEPTABLE_CONTENT_TYPE_RE.test(ct) || ct === '';
+      if (!ctOk) {
         res.resume();
         return reject(new Error(`Unexpected Content-Type "${ct}"`));
       }
@@ -542,7 +545,6 @@ async function main() {
 
   // L-2: tasks return { ok, items } objects; counts tallied AFTER pool returns
   const tasks = feedTasks.map(({ src, feed }) => async () => {
-    // L-1: sanitise before logging
     const logName = sanitiseForLog(src.name);
     const logCat  = sanitiseForLog(feed.cat);
     process.stdout.write(`   \u2192 ${logName} [${logCat}]\u2026 `);
@@ -552,7 +554,8 @@ async function main() {
       process.stdout.write(`\u2713 ${items.length} items\n`);
       return { ok: true, items };
     } catch (err) {
-      process.stdout.write(`\u2717 ${sanitiseForLog(err.message)}\n`);
+      const msg = sanitiseForLog(err.message);
+      process.stdout.write(`\u2717 ${msg}\n`);
       return { ok: false, items: [] };
     }
   });
