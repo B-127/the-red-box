@@ -28,13 +28,6 @@ const VALID_CATS = new Set([
 const PAGE_SIZE        = 30;
 const REFRESH_INTERVAL = 5 * 60 * 1000;  // 5 min
 
-const SOURCES = [
-  { name: 'Daily FT',    abbr: 'DFT' },
-  { name: 'EconomyNext', abbr: 'EN'  },
-  { name: 'Ada Derana',  abbr: 'AD'  },
-  { name: 'Daily News',  abbr: 'DN'  },
-];
-
 // H-2: Root-relative path avoids <base href> resolution.
 // Update this path to match your GitHub Pages repo name.
 const FEED_URL = '/the-red-box/feed.json';
@@ -127,15 +120,16 @@ function initTheme() {
 
 // ── Date bar ──────────────────────────────────────────────────────────────────
 
-function setDateBar() {
+function setDateBar(sourceCount) {
   const now     = new Date();
   const dateStr = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Asia/Colombo',
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   }).format(now);
 
+  const count = (typeof sourceCount === 'number' && sourceCount > 0) ? sourceCount : '—';
   const el = document.getElementById('date-bar-text');
-  if (el) el.textContent = dateStr + ' \u00b7 ' + SOURCES.length + ' sources \u00b7 Updated every 30 min';
+  if (el) el.textContent = dateStr + ' \u00b7 ' + count + ' sources \u00b7 Updated every 30 min';
 }
 
 // ── Ticker ────────────────────────────────────────────────────────────────────
@@ -649,7 +643,10 @@ async function loadFeed() {
     });
 
     if (Array.isArray(data.ticker)) buildTicker(data.ticker);
-    if (Array.isArray(data.sourceCounts)) buildFeedsGrid(data.sourceCounts);
+    if (Array.isArray(data.sourceCounts)) {
+      buildFeedsGrid(data.sourceCounts);
+      setDateBar(data.sourceCounts.length);
+    }
 
     if (data.generated && typeof data.generated === 'string') {
       const genDate = new Date(data.generated);
@@ -711,7 +708,7 @@ async function loadFeed() {
 // ── Initialise ────────────────────────────────────────────────────────────────
 
 initTheme();
-setDateBar();
+setDateBar(0);
 loadFeed();
 
 // M-7: visibilitychange and interval both guarded by isLoading flag
