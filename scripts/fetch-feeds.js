@@ -211,8 +211,13 @@ function secureFetch(url, allowedHosts, redirectsLeft = MAX_REDIRECTS) {
           return reject(new Error('Redirect with no Location header'));
         }
         let redirectUrl;
-        try { redirectUrl = new URL(loc, url).href; }
-        catch {
+        try {
+          redirectUrl = new URL(loc, url).href;
+          // Upgrade http:// redirects to https:// — same as we do for article links.
+          // Ada Derana and similar sites redirect rss.php to http:// which our
+          // https-only fetcher would otherwise reject.
+          redirectUrl = redirectUrl.replace(/^http:\/\//i, 'https://');
+        } catch {
           res.resume();
           return reject(new Error('Redirect Location is not a valid URL'));
         }
